@@ -9,7 +9,7 @@ PORT=MQTT_PORT
 TOPIC=MQTT_TOPIC      # topic to listen for sensor data
 NET_DEVICE=ETH_DEVICE # prints ip address 
 
-if [ ! -f ${MESON_BUILDDIR} ]; then
+if [ ! -d ${MESON_BUILDDIR} ]; then
 	echo "Setting up meson builddir";
 	if ! meson setup ${MESON_BUILDDIR}; then
 		echo "Meson setup failed";
