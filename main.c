@@ -73,7 +73,7 @@ static int parse_payload(const char *json_string, user_data_t *data)
 	}
 	json_t *root = json_loads(json_string, 0, NULL);
 	if (!root) {
-		fprintf(stderr, "Error: Failed to parse JSON string.\n");
+		fprintf(stderr, "Error: Failed to parse JSON string: %s\n", json_string);
 		return 1;
 	}
 
