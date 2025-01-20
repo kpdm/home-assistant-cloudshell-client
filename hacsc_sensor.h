@@ -20,6 +20,7 @@ typedef struct hacsc_sensor {
 	hacsc_sensor_num_data_t inverter_temp;
 	hacsc_sensor_tm_data_t sun_next_sunrise;
 	hacsc_sensor_tm_data_t sun_next_sunset;
+	hacsc_sensor_num_data_t weather_temperature;
 } hacsc_sensor_t;
 
 #endif /* HACSC_SENSOR_H */

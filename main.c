@@ -102,6 +102,10 @@ static int parse_payload(const char *json_string, user_data_t *data)
 	} else if (strcmp(id, "sunrise") == 0) {
 		data->display_enabled = true;
 		enable_display(true);
+	
+	} else if (strcmp(id, "weather.forecast_home") == 0) {
+		data->sensor->weather_temperature.value = json_number_value(json_object_get(root, "value"));
+		data->sensor->weather_temperature.last_updated = get_json_timestamp(json_string_value(json_object_get(root, "last_updated")));
 
 	} else if (strcmp(id, "sensor.inverter_ac_power") == 0) {
 		data->sensor->inverter_power_ac.value = json_number_value(json_object_get(root, "value"));

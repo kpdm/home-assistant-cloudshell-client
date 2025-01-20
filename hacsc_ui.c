@@ -14,13 +14,24 @@
 #define STATUS_YELLOW 9
 #define STATUS_RED 10
 
-#define TEMPERATURE_PATH "/sys/devices/virtual/thermal/thermal_zone0/temp"
+#define ROW_POWER_TOTAL 1
+#define ROW_POWER_DC1   2
+#define ROW_POWER_DC2   3
+#define ROW_TEMPERATURE 5
+#define ROW_SUNRISE     6
+#define ROW_SUNSET      7
+#define ROW_DATE        9
+#define ROW_CPU         10
+#define ROW_IP          11
+
+
+#define CPU_TEMPERATURE_PATH "/sys/devices/virtual/thermal/thermal_zone0/temp"
 
 static void refresh_time(hacsc_win_t *ui);
 static void refresh_ip(hacsc_win_t *ui, const char *device_name);
 static char* get_ip(const char *device_name);
-static void refresh_temperature(hacsc_win_t *ui);
-static int get_temperature();
+static void refresh_cpu_temperature(hacsc_win_t *ui);
+static int get_cpu_temperature();
 static void refresh_sensor(hacsc_win_t *ui, hacsc_sensor_t *sensor);
 
 hacsc_win_t* hacsc_win_create() 
@@ -69,7 +80,7 @@ void hacsc_win_refresh(hacsc_win_t *ui, hacsc_sensor_t *sensor, char *net_device
 	wclear(ui->mainwindow);
 	refresh_time(ui);
 	refresh_ip(ui, net_device);
-	refresh_temperature(ui);
+	refresh_cpu_temperature(ui);
 	refresh_sensor(ui, sensor);
 	wrefresh(ui->mainwindow);
 }
@@ -125,27 +136,28 @@ static void refresh_sensor(hacsc_win_t *ui, hacsc_sensor_t *sensor)
 	int bar_width = 6;
 	int progress_x = 16;
 
-	mvwprintw(ui->mainwindow, 1, 1, "Total: %5.1f W", sensor->inverter_power_ac.value);
-	print_progress(ui, 1, progress_x, 800, sensor->inverter_power_ac.value, bar_width);
+	mvwprintw(ui->mainwindow, ROW_POWER_TOTAL, 1, "Total: %5.1f W", sensor->inverter_power_ac.value);
+	print_progress(ui, ROW_POWER_TOTAL, progress_x, 800, sensor->inverter_power_ac.value, bar_width);
 
-	mvwprintw(ui->mainwindow, 2, 1, "DC 1:  %5.1f W", sensor->inverter_power_dc1.value);
-	print_progress(ui, 2, progress_x, 400, sensor->inverter_power_dc1.value, bar_width);
+	mvwprintw(ui->mainwindow, ROW_POWER_DC1, 1, "DC 1:  %5.1f W", sensor->inverter_power_dc1.value);
+	print_progress(ui, ROW_POWER_DC1, progress_x, 400, sensor->inverter_power_dc1.value, bar_width);
 
-	mvwprintw(ui->mainwindow, 3, 1, "DC 2:  %5.1f W", sensor->inverter_power_dc2.value);
-	print_progress(ui, 3, progress_x, 400, sensor->inverter_power_dc2.value, bar_width);
+	mvwprintw(ui->mainwindow, ROW_POWER_DC2, 1, "DC 2:  %5.1f W", sensor->inverter_power_dc2.value);
+	print_progress(ui, ROW_POWER_DC2, progress_x, 400, sensor->inverter_power_dc2.value, bar_width);
 
-	mvwprintw(ui->mainwindow, 5, 1, "Temp:  %5.1f °C", sensor->inverter_temp.value);
+	mvwprintw(ui->mainwindow, ROW_TEMPERATURE, 1, "Temp:    %.1f °C / %.1f °C", sensor->inverter_temp.value, sensor->weather_temperature.value);
+
 	if (sensor->sun_next_sunrise.value.tm_mday == 0) { 
-		mvwprintw(ui->mainwindow, 6, 1, "Sunrise: N/A");
+		mvwprintw(ui->mainwindow, ROW_SUNRISE, 1, "Sunrise: N/A");
 	} else {
 		struct tm *sr =to_localtime(sensor->sun_next_sunrise.value);
-		mvwprintw(ui->mainwindow, 6, 1, "Sunrise: %02d:%02d:%02d", sr->tm_hour, sr->tm_min, sr->tm_sec);
+		mvwprintw(ui->mainwindow, ROW_SUNRISE, 1, "Sunrise: %02d:%02d:%02d", sr->tm_hour, sr->tm_min, sr->tm_sec);
 	}
 	if (sensor->sun_next_sunset.value.tm_mday == 0) { 
-		mvwprintw(ui->mainwindow, 7, 1, "Sunset:  N/A");
+		mvwprintw(ui->mainwindow, ROW_SUNSET, 1, "Sunset:  N/A");
 	} else {
 		struct tm *ss =to_localtime(sensor->sun_next_sunset.value);
-		mvwprintw(ui->mainwindow, 7, 1, "Sunset:  %02d:%02d:%02d", ss->tm_hour, ss->tm_min, ss->tm_sec);
+		mvwprintw(ui->mainwindow, ROW_SUNSET, 1, "Sunset:  %02d:%02d:%02d", ss->tm_hour, ss->tm_min, ss->tm_sec);
 	}
 }
 
@@ -156,9 +168,9 @@ static void refresh_ip(hacsc_win_t *ui, const char *device_name)
 	}
 	char *ip = get_ip(device_name);
 	if (!ip) {
-		mvwprintw(ui->mainwindow, 9, 1, "IP:      N/A");
+		mvwprintw(ui->mainwindow, ROW_IP, 1, "IP:      N/A");
 	} else {
-		mvwprintw(ui->mainwindow, 9, 1, "IP:      %s", ip);
+		mvwprintw(ui->mainwindow, ROW_IP, 1, "IP:      %s", ip);
 	}
 }
 
@@ -181,22 +193,19 @@ static char* get_ip(const char *device_name)
 	return NULL;
 }
 
-static void refresh_temperature(hacsc_win_t *ui) 
+static void refresh_cpu_temperature(hacsc_win_t *ui) 
 {
-	int temp = get_temperature();
+	int temp = get_cpu_temperature();
 	if (temp == INT_MIN) {
 		return;
 	}
-
-	char buf[16];
-	snprintf(buf, sizeof(buf), "%.1f °C", temp / 1000.0);
-	mvwprintw(ui->mainwindow, 11, ui->cols-strlen(buf), "%s", buf);
+	mvwprintw(ui->mainwindow, ROW_CPU, 1, "CPU:    %5.1f °C", (temp/1000.0));
 }
 
 
-static int get_temperature()
+static int get_cpu_temperature()
 {
-        FILE *fp = fopen(TEMPERATURE_PATH, "r");
+        FILE *fp = fopen(CPU_TEMPERATURE_PATH, "r");
         if (fp == NULL) {
                 return false;
         }
@@ -211,7 +220,7 @@ static void refresh_time(hacsc_win_t *ui)
 {
 	time_t t = time(NULL);
 	struct tm *now = localtime(&t);
-	mvwprintw(ui->mainwindow, 10, 1, "Date:    %02d.%02d.%04d", now->tm_mday, now->tm_mon + 1, now->tm_year + 1900);
-	mvwprintw(ui->mainwindow, 11, 1, "Time:    %02d:%02d:%02d", now->tm_hour, now->tm_min, now->tm_sec);
+	mvwprintw(ui->mainwindow, ROW_DATE, 1, "Date:    %02d:%02d:%02d", now->tm_hour, now->tm_min, now->tm_sec);
+	mvwprintw(ui->mainwindow, ROW_DATE, ui->cols-10, "%02d.%02d.%04d", now->tm_mday, now->tm_mon + 1, now->tm_year + 1900);
 }
 
