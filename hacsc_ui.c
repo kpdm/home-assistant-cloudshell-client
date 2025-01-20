@@ -8,14 +8,19 @@
 #include <sys/socket.h>
 #include <ifaddrs.h>
 #include <string.h>
+#include <limits.h>
 
 #define STATUS_GREEN 8
 #define STATUS_YELLOW 9
 #define STATUS_RED 10
 
+#define TEMPERATURE_PATH "/sys/devices/virtual/thermal/thermal_zone0/temp"
+
 static void refresh_time(hacsc_win_t *ui);
 static void refresh_ip(hacsc_win_t *ui, const char *device_name);
 static char* get_ip(const char *device_name);
+static void refresh_temperature(hacsc_win_t *ui);
+static int get_temperature();
 static void refresh_sensor(hacsc_win_t *ui, hacsc_sensor_t *sensor);
 
 hacsc_win_t* hacsc_win_create() 
@@ -64,6 +69,7 @@ void hacsc_win_refresh(hacsc_win_t *ui, hacsc_sensor_t *sensor, char *net_device
 	wclear(ui->mainwindow);
 	refresh_time(ui);
 	refresh_ip(ui, net_device);
+	refresh_temperature(ui);
 	refresh_sensor(ui, sensor);
 	wrefresh(ui->mainwindow);
 }
@@ -174,6 +180,32 @@ static char* get_ip(const char *device_name)
 	freeifaddrs(ifap);
 	return NULL;
 }
+
+static void refresh_temperature(hacsc_win_t *ui) 
+{
+	int temp = get_temperature();
+	if (temp == INT_MIN) {
+		return;
+	}
+
+	char buf[16];
+	snprintf(buf, sizeof(buf), "%.1f °C", temp / 1000.0);
+	mvwprintw(ui->mainwindow, 11, ui->cols-strlen(buf), "%s", buf);
+}
+
+
+static int get_temperature()
+{
+        FILE *fp = fopen(TEMPERATURE_PATH, "r");
+        if (fp == NULL) {
+                return false;
+        }
+        int t = INT_MIN;
+        fscanf(fp, "%d", &t);
+        fclose(fp);
+	return t;
+}
+
 
 static void refresh_time(hacsc_win_t *ui) 
 {
