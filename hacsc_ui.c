@@ -27,7 +27,6 @@
 #define ROW_CPU         10
 #define ROW_IP          11
 
-
 #define CPU_TEMPERATURE_PATH "/sys/devices/virtual/thermal/thermal_zone0/temp"
 
 static void refresh_time(hacsc_win_t *ui);
@@ -138,7 +137,7 @@ static struct tm* to_localtime(struct tm utc)
 
 static void refresh_sensor(hacsc_win_t *ui, hacsc_sensor_t *sensor) 
 {
-	int bar_width = 6;
+	int bar_width = 7;
 	int progress_x = 16;
 
 	mvwprintw(ui->mainwindow, ROW_POWER_TOTAL, COL_LEFT, "Total: %5.1f W", sensor->inverter_power_ac.value);
