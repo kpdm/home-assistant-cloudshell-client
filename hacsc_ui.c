@@ -224,8 +224,8 @@ static void refresh_time(hacsc_win_t *ui)
 {
 	time_t t = time(NULL);
 	struct tm *now = localtime(&t);
-	mvwprintw(ui->mainwindow, ROW_DATE, COL_LEFT, "Date:    %02d:%02d:%02d", now->tm_hour, now->tm_min, now->tm_sec);
-	mvwprintw(ui->mainwindow, ROW_DATE, ui->cols-10, "%02d.%02d.%04d", now->tm_mday, now->tm_mon + 1, now->tm_year + 1900);
+	mvwprintw(ui->mainwindow, ROW_DATE, COL_LEFT, "Date:    %02d.%02d.%04d", now->tm_mday, now->tm_mon + 1, now->tm_year + 1900);
+	mvwprintw(ui->mainwindow, ROW_DATE, ui->cols-8, "%02d:%02d:%02d", now->tm_hour, now->tm_min, now->tm_sec);
 }
 
 static void refresh_uptime(hacsc_win_t *ui) 
